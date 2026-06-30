@@ -3,7 +3,7 @@ import Yams
 
 @MainActor
 class Journal: ObservableObject {
-    let directory: URL
+    private(set) var directory: URL
     @Published var months: [String: Month] = [:]
     @Published var config: Config = Config()
     
@@ -13,6 +13,11 @@ class Journal: ObservableObject {
     
     deinit {
         directory.stopAccessingSecurityScopedResource()
+    }
+    
+    func updateDirectory(to newDirectory: URL) {
+        directory.stopAccessingSecurityScopedResource()
+        self.directory = newDirectory
     }
     
     func key(year: Int, month: Int) -> String {

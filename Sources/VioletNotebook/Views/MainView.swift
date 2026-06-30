@@ -133,11 +133,8 @@ struct MainView: View {
             
             // Load
             showFolderPicker = false
-            journal.months.removeAll()
-            let newJournal = Journal(directory: url)
-            try? newJournal.loadAll()
-            journal.months = newJournal.months
-            journal.config = newJournal.config
+            journal.updateDirectory(to: url)
+            try? journal.loadAll()
             loadCurrentDay(date: selectedDate)
         }
     }
@@ -147,6 +144,7 @@ struct MainView: View {
             var isStale = false
             if let url = try? URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale) {
                 _ = url.startAccessingSecurityScopedResource()
+                journal.updateDirectory(to: url)
                 try? journal.loadAll()
                 loadCurrentDay(date: selectedDate)
                 return
