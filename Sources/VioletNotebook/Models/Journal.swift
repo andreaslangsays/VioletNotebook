@@ -11,6 +11,10 @@ class Journal: ObservableObject {
         self.directory = directory
     }
     
+    deinit {
+        directory.stopAccessingSecurityScopedResource()
+    }
+    
     func key(year: Int, month: Int) -> String {
         return String(format: "%04d-%02d", year, month)
     }
@@ -23,7 +27,8 @@ class Journal: ObservableObject {
     
     func loadAll() throws {
         let fm = FileManager.default
-        guard fm.fileExists(atPath: directory.path) else { return }
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: directory.path, isDirectory: &isDir), isDir.boolValue else { return }
         
         // Load config
         let configFile = directory.appendingPathComponent("configuration.cfg")
@@ -34,7 +39,7 @@ class Journal: ObservableObject {
         
         // Find month files (format: YYYY-MM.txt)
         let contents = try fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-        let regex = try NSRegularExpression(pattern: "^(\\d{4})-(\\d{2})\\.txt$")
+        let regex = try NSRegularExpression(pattern: "^(\\d{4})-(\\d{2})\\.txt$", options: .caseInsensitive)
         
         var loadedMonths: [String: Month] = [:]
         for file in contents {
@@ -74,7 +79,9 @@ class Journal: ObservableObject {
         // Save month back to file
         let file = directory.appendingPathComponent(m.filename)
         if m.isEmpty {
-            try FileManager.default.removeItem(at: file)
+            if FileManager.default.fileExists(atPath: file.path) {
+                try FileManager.default.removeItem(at: file)
+            }
             months.removeValue(forKey: k)
         } else {
             let encoder = YAMLEncoder()

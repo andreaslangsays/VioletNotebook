@@ -113,4 +113,36 @@ final class JournalTests: XCTestCase {
         let journal = Journal(directory: tempDir)
         XCTAssertThrowsError(try journal.loadAll())
     }
+    
+    @MainActor
+    func testSaveEmptyEntryForNewMonthDoesNotThrow() throws {
+        let journal = Journal(directory: tempDir)
+        let date = DateComponents(year: 2026, month: 9, day: 1)
+        
+        // Saving empty text entry for a new month should not throw file-not-found
+        XCTAssertNoThrow(try journal.saveEntry(text: "", date: date))
+        
+        // Verify it was not written to disk and no month was added
+        let monthURL = tempDir.appendingPathComponent("2026-09.txt")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: monthURL.path))
+        XCTAssertNil(journal.entry(for: date))
+        XCTAssertTrue(journal.months.isEmpty)
+    }
+    
+    @MainActor
+    func testJournalLoadAllCaseInsensitiveMonthFiles() throws {
+        let lowercaseFile = tempDir.appendingPathComponent("2026-06.txt")
+        let uppercaseFile = tempDir.appendingPathComponent("2026-07.TXT")
+        
+        let content = "30:\n  text: Hello"
+        try content.write(to: lowercaseFile, atomically: true, encoding: .utf8)
+        try content.write(to: uppercaseFile, atomically: true, encoding: .utf8)
+        
+        let journal = Journal(directory: tempDir)
+        try journal.loadAll()
+        
+        XCTAssertNotNil(journal.months[journal.key(year: 2026, month: 6)])
+        XCTAssertNotNil(journal.months[journal.key(year: 2026, month: 7)])
+    }
 }
+

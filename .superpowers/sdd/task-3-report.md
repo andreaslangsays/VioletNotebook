@@ -124,3 +124,32 @@ None. The code compiles without warnings, fits into the existing code patterns p
 ### 5. Verified and Tested
 - Added a new test `testJournalLoadAllThrowsOnInvalidYAML` to verify that `loadAll()` correctly throws when encountering invalid YAML content.
 - Verified that all 14 tests pass successfully.
+
+## Fix Report (Round 2): Review Findings Resolved
+
+### 1. File Deletion Failure on Non-Existent Files in saveEntry
+- Modified `saveEntry(text:date:)` to check if the file exists on disk (`FileManager.default.fileExists(atPath: file.path)`) before calling `removeItem(at:)`. This prevents a Cocoa Error 4 ("The file doesn't exist") when clearing a day's text in a new, unwritten month.
+- Verified by adding the test case `testSaveEmptyEntryForNewMonthDoesNotThrow` in `JournalTests.swift`.
+
+### 2. Security-Scoped Resource Handle Leak
+- Added a `deinit` block to the `Journal` class to stop accessing security-scoped resources:
+  ```swift
+  deinit {
+      directory.stopAccessingSecurityScopedResource()
+  }
+  ```
+
+### 3. Robust Directory Checking in loadAll
+- Updated the path check in `loadAll()` to verify both the existence and the fact that the path is a directory:
+  ```swift
+  var isDir: ObjCBool = false
+  guard fm.fileExists(atPath: directory.path, isDirectory: &isDir), isDir.boolValue else { return }
+  ```
+
+### 4. Case-Insensitive Month File Regex
+- Configured the regular expression for finding month files to be case-insensitive, allowing matching of files with uppercase extension `.TXT`:
+  ```swift
+  let regex = try NSRegularExpression(pattern: "^(\\d{4})-(\\d{2})\\.txt$", options: .caseInsensitive)
+  ```
+- Verified by adding the test case `testJournalLoadAllCaseInsensitiveMonthFiles` in `JournalTests.swift`.
+
