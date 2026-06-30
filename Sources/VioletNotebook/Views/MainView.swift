@@ -89,6 +89,8 @@ struct MainView: View {
             .frame(width: 350, height: 200)
         }
         .onAppear {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
             loadSavedFolder()
         }
         .onChange(of: selectedDate) { newDate in
