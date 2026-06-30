@@ -19,13 +19,19 @@ final class ModelTests: XCTestCase {
         
         XCTAssertEqual(monthContent[15]?.text, "Today was a productive day. #project #work")
         XCTAssertEqual(monthContent[18]?.text, "Just chilled.")
-        XCTAssertEqual(monthContent[15]?.extraCategories?["Arbeit"]?["Task 1"], .some(nil))
-        XCTAssertEqual(monthContent[15]?.extraCategories?["Arbeit"]?.keys.sorted(), ["Task 1", "Task 2"])
+        
+        if case .object(let arbeitDict) = monthContent[15]?.extraCategories?["Arbeit"] {
+            XCTAssertEqual(arbeitDict["Task 1"], .null)
+            XCTAssertEqual(arbeitDict["Task 2"], .null)
+            XCTAssertEqual(arbeitDict.keys.sorted(), ["Task 1", "Task 2"])
+        } else {
+            XCTFail("Expected .object for 'Arbeit'")
+        }
     }
 
     func testMonthSerialization() throws {
         var dayData = DayData(text: "Hello #world")
-        dayData.extraCategories = ["Coding": ["SwiftUI": nil]]
+        dayData.extraCategories = ["Coding": .object(["SwiftUI": .null])]
         let monthData = [1: dayData]
         
         let encoder = YAMLEncoder()
@@ -59,5 +65,35 @@ final class ModelTests: XCTestCase {
         var nonEmptyMonth = Month(year: 2026, month: 6)
         nonEmptyMonth.days = [1: DayData(text: "Hello")]
         XCTAssertFalse(nonEmptyMonth.isEmpty)
+    }
+
+    func testMonthWithEmptyTextAndNonEmptyCategoriesIsNotEmpty() {
+        var month = Month(year: 2026, month: 6)
+        month.days = [1: DayData(text: "", extraCategories: ["Custom": .string("Value")])]
+        XCTAssertFalse(month.isEmpty)
+    }
+
+    func testMissingOrNullTextKeysDecodeSuccessfully() throws {
+        let yamlData = """
+        15:
+          Arbeit:
+            Task 1: null
+        18:
+          text: null
+          Sport: "Running"
+        """
+        let decoder = YAMLDecoder()
+        let monthContent = try decoder.decode([Int: DayData].self, from: yamlData)
+        
+        XCTAssertEqual(monthContent[15]?.text, "")
+        XCTAssertEqual(monthContent[18]?.text, "")
+        
+        if case .object(let arbeitDict) = monthContent[15]?.extraCategories?["Arbeit"] {
+            XCTAssertEqual(arbeitDict["Task 1"], .null)
+        } else {
+            XCTFail("Expected .object for 'Arbeit'")
+        }
+        
+        XCTAssertEqual(monthContent[18]?.extraCategories?["Sport"], .string("Running"))
     }
 }

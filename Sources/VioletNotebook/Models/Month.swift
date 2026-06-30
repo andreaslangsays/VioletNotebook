@@ -1,15 +1,24 @@
 import Foundation
 
-struct Month {
-    let year: Int
-    let month: Int
-    var days: [Int: DayData] = [:]
+public struct Month {
+    public let year: Int
+    public let month: Int
+    public var days: [Int: DayData]
     
-    var isEmpty: Bool {
-        days.values.allSatisfy { $0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    public init(year: Int, month: Int, days: [Int: DayData] = [:]) {
+        self.year = year
+        self.month = month
+        self.days = days
     }
     
-    var filename: String {
+    public var isEmpty: Bool {
+        days.values.allSatisfy { day in
+            day.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            (day.extraCategories?.isEmpty ?? true)
+        }
+    }
+    
+    public var filename: String {
         String(format: "%04d-%02d.txt", year, month)
     }
 }
