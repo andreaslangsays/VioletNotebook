@@ -1,6 +1,7 @@
 import Foundation
 import Yams
 
+@MainActor
 class Journal: ObservableObject {
     let directory: URL
     @Published var months: [String: Month] = [:]
@@ -46,7 +47,7 @@ class Journal: ObservableObject {
                     let k = self.key(year: year, month: month)
                     let rawYAML = try String(contentsOf: file, encoding: .utf8)
                     let decoder = YAMLDecoder()
-                    let days = (try? decoder.decode([Int: DayData].self, from: rawYAML)) ?? [:]
+                    let days = try decoder.decode([Int: DayData].self, from: rawYAML)
                     loadedMonths[k] = Month(year: year, month: month, days: days)
                 }
             }
@@ -73,12 +74,21 @@ class Journal: ObservableObject {
         // Save month back to file
         let file = directory.appendingPathComponent(m.filename)
         if m.isEmpty {
-            try? FileManager.default.removeItem(at: file)
+            try FileManager.default.removeItem(at: file)
             months.removeValue(forKey: k)
         } else {
             let encoder = YAMLEncoder()
             let yamlString = try encoder.encode(m.days)
             try yamlString.write(to: file, atomically: true, encoding: .utf8)
         }
+    }
+    
+    public static func resolveBookmark(data: Data) throws -> URL {
+        var isStale = false
+        let url = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+        guard url.startAccessingSecurityScopedResource() else {
+            throw NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoPermissionError, userInfo: nil)
+        }
+        return url
     }
 }

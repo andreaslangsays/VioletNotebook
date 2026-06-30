@@ -15,6 +15,7 @@ final class JournalTests: XCTestCase {
         super.tearDown()
     }
     
+    @MainActor
     func testJournalLoadAndSave() throws {
         let journal = Journal(directory: tempDir)
         XCTAssertTrue(journal.months.isEmpty)
@@ -30,6 +31,7 @@ final class JournalTests: XCTestCase {
         XCTAssertEqual(day?.text, "Hello #swift")
     }
     
+    @MainActor
     func testJournalLoadConfig() throws {
         // Create configuration.cfg file
         let configURL = tempDir.appendingPathComponent("configuration.cfg")
@@ -47,6 +49,7 @@ final class JournalTests: XCTestCase {
         XCTAssertEqual(journal.config["editor_font"], "Monaco")
     }
     
+    @MainActor
     func testJournalSaveEmptyEntryDeletesFile() throws {
         let journal = Journal(directory: tempDir)
         let date = DateComponents(year: 2026, month: 6, day: 30)
@@ -63,6 +66,7 @@ final class JournalTests: XCTestCase {
         XCTAssertTrue(journal.months.isEmpty)
     }
     
+    @MainActor
     func testJournalSaveEmptyEntryWithCategoriesKeepsFile() throws {
         let journal = Journal(directory: tempDir)
         let date = DateComponents(year: 2026, month: 6, day: 30)
@@ -87,24 +91,26 @@ final class JournalTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: monthURL.path))
     }
     
+    @MainActor
     func testJournalIgnoreNonMonthFiles() throws {
         // Create a non-matching txt file
         let invalidFile = tempDir.appendingPathComponent("2026-06-backup.txt")
         try "dummy content".write(to: invalidFile, atomically: true, encoding: .utf8)
-        
-        // Create a matching txt file with invalid structure
-        let invalidYAMLFile = tempDir.appendingPathComponent("2026-07.txt")
-        try "invalid yaml content :::".write(to: invalidYAMLFile, atomically: true, encoding: .utf8)
         
         let journal = Journal(directory: tempDir)
         try journal.loadAll()
         
         // 2026-06-backup.txt should be ignored
         XCTAssertNil(journal.months[journal.key(year: 2026, month: 6)])
+    }
+    
+    @MainActor
+    func testJournalLoadAllThrowsOnInvalidYAML() throws {
+        // Create a matching txt file with invalid YAML
+        let invalidYAMLFile = tempDir.appendingPathComponent("2026-08.txt")
+        try "invalid: yaml: : content".write(to: invalidYAMLFile, atomically: true, encoding: .utf8)
         
-        // 2026-07.txt should decode to empty month/days due to invalid YAML but still be recognized as a month
-        let matchingKey = journal.key(year: 2026, month: 7)
-        XCTAssertNotNil(journal.months[matchingKey])
-        XCTAssertTrue(journal.months[matchingKey]?.days.isEmpty ?? false)
+        let journal = Journal(directory: tempDir)
+        XCTAssertThrowsError(try journal.loadAll())
     }
 }
