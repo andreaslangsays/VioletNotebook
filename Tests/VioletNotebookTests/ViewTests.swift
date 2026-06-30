@@ -101,4 +101,16 @@ final class ViewTests: XCTestCase {
         // Cleanup temp dir
         try? FileManager.default.removeItem(at: tempDir)
     }
+    
+    func testMainViewInitialization() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+        let journal = Journal(directory: tempDir)
+        let mainView = MainView(journal: journal)
+        XCTAssertNotNil(mainView)
+    }
 }
+
