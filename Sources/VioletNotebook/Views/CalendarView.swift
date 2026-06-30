@@ -51,7 +51,8 @@ struct CalendarView: View {
             VStack(spacing: 4) {
                 ForEach(0..<chunks.count, id: \.self) { rowIndex in
                     HStack(spacing: 0) {
-                        ForEach(chunks[rowIndex], id: \.self) { dateOpt in
+                        ForEach(0..<chunks[rowIndex].count, id: \.self) { colIndex in
+                            let dateOpt = chunks[rowIndex][colIndex]
                             if let date = dateOpt {
                                 let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
                                 let hasEntry = entryExists(date)
