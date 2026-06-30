@@ -2,18 +2,20 @@ import XCTest
 @testable import VioletNotebook
 
 final class ConfigTests: XCTestCase {
-    func testConfigParsing() throws {
+    func testConfigParsing() {
         let rawConfig = """
         # RedNotebook Config
         spellcheck=1
         autoSwitchMode=0
         previewFont=Helvetica, sans-serif
+        userDir=
         """
         
-        let config = try Config.parse(rawConfig)
+        let config = Config.parse(rawConfig)
         XCTAssertEqual(config["spellcheck"], "1")
         XCTAssertEqual(config["autoSwitchMode"], "0")
         XCTAssertEqual(config["previewFont"], "Helvetica, sans-serif")
+        XCTAssertEqual(config["userDir"], "")
     }
     
     func testConfigSerialization() throws {

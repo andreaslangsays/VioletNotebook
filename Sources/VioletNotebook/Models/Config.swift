@@ -8,7 +8,7 @@ struct Config {
         set { settings[key] = newValue }
     }
     
-    static func parse(_ raw: String) throws -> Config {
+    static func parse(_ raw: String) -> Config {
         var settings: [String: String] = [:]
         let lines = raw.components(separatedBy: .newlines)
         for line in lines {
@@ -16,7 +16,7 @@ struct Config {
             if trimmed.isEmpty || trimmed.hasPrefix("#") {
                 continue
             }
-            let parts = trimmed.split(separator: "=", maxSplits: 1)
+            let parts = trimmed.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
             if parts.count == 2 {
                 let key = String(parts[0]).trimmingCharacters(in: .whitespaces)
                 let value = String(parts[1]).trimmingCharacters(in: .whitespaces)
