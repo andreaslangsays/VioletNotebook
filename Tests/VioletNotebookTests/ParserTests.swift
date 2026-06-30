@@ -111,4 +111,24 @@ final class ParserTests: XCTestCase {
         XCTAssertTrue(html.contains("&amp;"))
         XCTAssertTrue(html.contains("&lt;script&gt;"))
     }
+
+    func testTaskReviewFixes() {
+        // Test Case: Multiple URLs without <i> tag injections
+        let rawMultipleURLs = "[Google \"\"https://google.com\"\"] and [Apple \"\"https://apple.com\"\"]"
+        let htmlMultipleURLs = Txt2TagsParser.toHTML(rawMultipleURLs)
+        XCTAssertFalse(htmlMultipleURLs.contains("<i>"))
+        XCTAssertFalse(htmlMultipleURLs.contains("</i>"))
+        XCTAssertTrue(htmlMultipleURLs.contains("<a href=\"https://google.com\">Google</a>"))
+        XCTAssertTrue(htmlMultipleURLs.contains("<a href=\"https://apple.com\">Apple</a>"))
+        
+        // Test Case: Level 5 heading is parsed as <h5> and not <hr />
+        let rawLevel5Heading = "===== Heading 5 ====="
+        let htmlLevel5Heading = Txt2TagsParser.toHTML(rawLevel5Heading)
+        XCTAssertEqual(htmlLevel5Heading, "<h5>Heading 5</h5>\n")
+        
+        // Test Case: Level 7 capped at h6
+        let rawLevel7Heading = "======= Heading 7 ======="
+        let htmlLevel7Heading = Txt2TagsParser.toHTML(rawLevel7Heading)
+        XCTAssertEqual(htmlLevel7Heading, "<h6>Heading 7</h6>\n")
+    }
 }

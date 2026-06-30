@@ -21,7 +21,7 @@ public struct Txt2TagsParser {
             }
             
             // Horizontal Line
-            if trimmed.starts(with: "=====") {
+            if trimmed.starts(with: "=====") && trimmed.allSatisfy({ $0 == "=" }) {
                 if inList {
                     result += "</ul>\n"
                     inList = false
@@ -36,7 +36,7 @@ public struct Txt2TagsParser {
                     result += "</ul>\n"
                     inList = false
                 }
-                let level = trimmed.prefix(while: { $0 == "=" }).count
+                let level = min(6, trimmed.prefix(while: { $0 == "=" }).count)
                 let titleText = trimmed.trimmingCharacters(in: CharacterSet(charactersIn: "=")).trimmingCharacters(in: .whitespaces)
                 result += "<h\(level)>\(titleText)</h\(level)>\n"
                 continue
@@ -79,7 +79,7 @@ public struct Txt2TagsParser {
         // Bold **text**
         s = parseRegex(s, pattern: "\\*\\*(.*?)\\*\\*", template: "<b>$1</b>")
         // Italic //text//
-        s = parseRegex(s, pattern: "//(.*?)//", template: "<i>$1</i>")
+        s = parseRegex(s, pattern: "(?<!:)//(.*?)(?<!:)//", template: "<i>$1</i>")
         // Underline __text__
         s = parseRegex(s, pattern: "__(.*?)__", template: "<u>$1</u>")
         // Strikethrough --text--
