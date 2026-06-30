@@ -3,7 +3,7 @@
 Task 1: complete (commits d732330..a66e1b5, review clean)
 Task 2: complete (commits a66e1b5..0db5a84, review clean)
 Task 3: complete (commits 0db5a84..37ed081, review clean)
-Task 4: complete (commit f660cd9, review clean)
-Task 5: pending
-Task 6: pending
-Task 7: pending
+Task 4: complete (commits 37ed081..ac15997, review clean)
+Task 5: complete (commits ac15997..1cb8a4b, review clean)
+Task 6: complete (commits 1cb8a4b..1516e1f, review clean)
+Task 7: complete (commits 1516e1f..bd4b8fc, review clean)
