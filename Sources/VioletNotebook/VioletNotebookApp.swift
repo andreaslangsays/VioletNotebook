@@ -2,8 +2,12 @@ import SwiftUI
 
 @main
 struct VioletNotebookApp: App {
-    // Temporary stub path during initial startup
     @StateObject private var journal = Journal(directory: URL(fileURLWithPath: NSHomeDirectory()))
+    
+    init() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+    }
     
     var body: some Scene {
         WindowGroup {
