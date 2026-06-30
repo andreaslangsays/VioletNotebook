@@ -97,5 +97,8 @@ final class ViewTests: XCTestCase {
         
         sidebar.applyTemplate("Line 2")
         XCTAssertEqual(editorText, "Hello Template\nLine 2")
+        
+        // Cleanup temp dir
+        try? FileManager.default.removeItem(at: tempDir)
     }
 }

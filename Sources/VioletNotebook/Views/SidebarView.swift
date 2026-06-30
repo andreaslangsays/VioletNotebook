@@ -71,9 +71,21 @@ struct SidebarView: View {
         }
     }
     
+    private static let searchDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+    
+    private static let tagRegex: NSRegularExpression? = {
+        try? NSRegularExpression(pattern: "(?:^|\\s)#([a-zA-Z][a-zA-Z0-9_]*)\\b", options: [])
+    }()
+
     var extractedTags: [String] {
         var tags: Set<String> = []
-        guard let regex = try? NSRegularExpression(pattern: "(?:^|\\s)#([a-zA-Z][a-zA-Z0-9_]*)\\b", options: []) else {
+        guard let regex = Self.tagRegex else {
             return []
         }
         for month in journal.months.values {
@@ -101,11 +113,7 @@ struct SidebarView: View {
     func searchResults(for query: String) -> [SearchResult] {
         guard !query.isEmpty else { return [] }
         var results: [SearchResult] = []
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "yyyy-MM-dd"
+        let formatter = Self.searchDateFormatter
         
         for (monthKey, month) in journal.months {
             for (dayKey, day) in month.days {
