@@ -44,7 +44,94 @@ final class ModelTests: XCTestCase {
         // Verify that it contains both text and categories in correct layout
         XCTAssertTrue(yamlString.contains("text: \"Hello #world\"") || yamlString.contains("text: Hello #world") || yamlString.contains("text: 'Hello #world'"))
         XCTAssertTrue(yamlString.contains("Coding:"))
-        XCTAssertTrue(yamlString.contains("SwiftUI: null") || yamlString.contains("SwiftUI: .nan") || yamlString.contains("SwiftUI: null"))
+        XCTAssertTrue(yamlString.contains("SwiftUI: null"))
+    }
+
+    func testNullAndBooleanAndNumberPreservation() throws {
+        let yamlData = """
+        1:
+          text: "Test day"
+          myBoolTrue: true
+          myBoolFalse: false
+          myInt: 42
+          myDouble: 3.14
+          myNull: null
+          myNested:
+            zebra: "last"
+            apple: "first"
+        """
+        
+        let decoder = YAMLDecoder()
+        let monthContent = try decoder.decode([Int: DayData].self, from: yamlData)
+        
+        guard let day = monthContent[1] else {
+            XCTFail("Expected day 1 to be decoded")
+            return
+        }
+        
+        XCTAssertEqual(day.text, "Test day")
+        guard let extra = day.extraCategories else {
+            XCTFail("Expected extraCategories to be non-nil")
+            return
+        }
+        
+        XCTAssertEqual(extra["myBoolTrue"], .bool(true))
+        XCTAssertEqual(extra["myBoolFalse"], .bool(false))
+        XCTAssertEqual(extra["myInt"], .integer(42))
+        XCTAssertEqual(extra["myDouble"], .number(3.14))
+        XCTAssertEqual(extra["myNull"], .null)
+        
+        if case .object(let nested) = extra["myNested"] {
+            XCTAssertEqual(nested["apple"], .string("first"))
+            XCTAssertEqual(nested["zebra"], .string("last"))
+        } else {
+            XCTFail("Expected .object for myNested")
+        }
+        
+        // Let's encode it back to YAML
+        let encoder = YAMLEncoder()
+        let serialized = try encoder.encode(monthContent)
+        
+        print("--- SERIALIZED FOR PRESERVATION ---")
+        print(serialized)
+        print("------------------------------------")
+        
+        // Verify key ordering and type preservation
+        let reDecoded = try decoder.decode([Int: DayData].self, from: serialized)
+        guard let reDay = reDecoded[1], let reExtra = reDay.extraCategories else {
+            XCTFail("Expected re-decoded data to be complete")
+            return
+        }
+        
+        XCTAssertEqual(reExtra["myBoolTrue"], .bool(true))
+        XCTAssertEqual(reExtra["myBoolFalse"], .bool(false))
+        XCTAssertEqual(reExtra["myInt"], .integer(42))
+        XCTAssertEqual(reExtra["myDouble"], .number(3.14))
+        XCTAssertEqual(reExtra["myNull"], .null)
+        XCTAssertEqual(reExtra["myNested"], extra["myNested"])
+        
+        // Also verify the exact string layout of the serialized output to ensure key sorting is correct.
+        guard let appleRange = serialized.range(of: "apple:"),
+              let zebraRange = serialized.range(of: "zebra:") else {
+            XCTFail("Expected 'apple:' and 'zebra:' in serialized output")
+            return
+        }
+        XCTAssertLessThan(appleRange.lowerBound, zebraRange.lowerBound)
+        
+        guard let boolFalseRange = serialized.range(of: "myBoolFalse:"),
+              let boolTrueRange = serialized.range(of: "myBoolTrue:"),
+              let doubleRange = serialized.range(of: "myDouble:"),
+              let intRange = serialized.range(of: "myInt:"),
+              let nestedRange = serialized.range(of: "myNested:"),
+              let nullRange = serialized.range(of: "myNull:") else {
+            XCTFail("Expected all category keys in serialized output")
+            return
+        }
+        XCTAssertLessThan(boolFalseRange.lowerBound, boolTrueRange.lowerBound)
+        XCTAssertLessThan(boolTrueRange.lowerBound, doubleRange.lowerBound)
+        XCTAssertLessThan(doubleRange.lowerBound, intRange.lowerBound)
+        XCTAssertLessThan(intRange.lowerBound, nestedRange.lowerBound)
+        XCTAssertLessThan(nestedRange.lowerBound, nullRange.lowerBound)
     }
 
     func testMonthFilenameAndIsEmpty() {

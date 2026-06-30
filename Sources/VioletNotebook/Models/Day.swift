@@ -1,7 +1,17 @@
 import Foundation
 
+public struct DynamicCodingKeys: CodingKey {
+    public var stringValue: String
+    public init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+    public var intValue: Int?
+    public init?(intValue: Int) { return nil }
+}
+
 public enum YAMLValue: Codable, Equatable {
     case string(String)
+    case integer(Int)
     case number(Double)
     case bool(Bool)
     case array([YAMLValue])
@@ -12,12 +22,14 @@ public enum YAMLValue: Codable, Equatable {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
-        } else if let s = try? container.decode(String.self) {
-            self = .string(s)
         } else if let b = try? container.decode(Bool.self) {
             self = .bool(b)
+        } else if let i = try? container.decode(Int.self) {
+            self = .integer(i)
         } else if let d = try? container.decode(Double.self) {
             self = .number(d)
+        } else if let s = try? container.decode(String.self) {
+            self = .string(s)
         } else if let arr = try? container.decode([YAMLValue].self) {
             self = .array(arr)
         } else if let obj = try? container.decode([String: YAMLValue].self) {
@@ -28,14 +40,30 @@ public enum YAMLValue: Codable, Equatable {
     }
 
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
         switch self {
-        case .string(let s): try container.encode(s)
-        case .number(let d): try container.encode(d)
-        case .bool(let b): try container.encode(b)
-        case .array(let arr): try container.encode(arr)
-        case .object(let obj): try container.encode(obj)
-        case .null: try container.encodeNil()
+        case .string(let s):
+            var container = encoder.singleValueContainer()
+            try container.encode(s)
+        case .integer(let i):
+            var container = encoder.singleValueContainer()
+            try container.encode(i)
+        case .number(let d):
+            var container = encoder.singleValueContainer()
+            try container.encode(d)
+        case .bool(let b):
+            var container = encoder.singleValueContainer()
+            try container.encode(b)
+        case .array(let arr):
+            var container = encoder.singleValueContainer()
+            try container.encode(arr)
+        case .object(let obj):
+            var objContainer = encoder.container(keyedBy: DynamicCodingKeys.self)
+            for (key, val) in obj.sorted(by: { $0.key < $1.key }) {
+                try objContainer.encode(val, forKey: DynamicCodingKeys(stringValue: key)!)
+            }
+        case .null:
+            var container = encoder.singleValueContainer()
+            try container.encodeNil()
         }
     }
 }
@@ -49,15 +77,6 @@ public struct DayData: Codable, Equatable {
         self.extraCategories = extraCategories
     }
     
-    public struct DynamicCodingKeys: CodingKey {
-        public var stringValue: String
-        public init?(stringValue: String) {
-            self.stringValue = stringValue
-        }
-        public var intValue: Int?
-        public init?(intValue: Int) { return nil }
-    }
-    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
         self.text = try container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "text")!) ?? ""
@@ -65,8 +84,10 @@ public struct DayData: Codable, Equatable {
         var extra: [String: YAMLValue] = [:]
         for key in container.allKeys {
             if key.stringValue != "text" {
-                if let value = try? container.decode(YAMLValue.self, forKey: key) {
-                    extra[key.stringValue] = value
+                if try container.decodeNil(forKey: key) {
+                    extra[key.stringValue] = .null
+                } else if let val = try? container.decode(YAMLValue.self, forKey: key) {
+                    extra[key.stringValue] = val
                 }
             }
         }
