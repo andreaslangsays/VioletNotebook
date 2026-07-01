@@ -123,12 +123,20 @@ class PDFExporter: NSObject, WKNavigationDelegate {
         webView.createPDF(configuration: config) { [weak self] result in
             guard let self = self else { return }
             self.completion?(result)
+            self.completion = nil
             self.webView = nil
         }
     }
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         completion?(.failure(error))
+        completion = nil
+        self.webView = nil
+    }
+    
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        completion?(.failure(error))
+        completion = nil
         self.webView = nil
     }
 }
@@ -181,7 +189,7 @@ struct ExportView: View {
             Text("Tagebuch exportieren")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(Color(nsColor: .labelColor))
+                .foregroundColor(.primary)
             
             VStack(spacing: 12) {
                 DatePicker("Startdatum:", selection: $startDate, displayedComponents: .date)
@@ -200,7 +208,13 @@ struct ExportView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             
-            if let error = errorMessage {
+            if startDate > endDate {
+                Text("Das Startdatum darf nicht nach dem Enddatum liegen.")
+                    .foregroundColor(.red)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            } else if let error = errorMessage {
                 Text(error)
                     .foregroundColor(.red)
                     .font(.caption)
@@ -228,7 +242,7 @@ struct ExportView: View {
                     runExport()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isExporting)
+                .disabled(isExporting || startDate > endDate)
             }
             .padding(.horizontal)
         }
