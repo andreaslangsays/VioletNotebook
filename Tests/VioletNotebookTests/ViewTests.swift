@@ -172,6 +172,76 @@ final class ViewTests: XCTestCase {
         
         try? FileManager.default.removeItem(at: tempDir)
     }
+    
+    func testStatsDashboardCalculations() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+        
+        let journal = Journal(directory: tempDir)
+        let statsView = StatsDashboardView(journal: journal)
+        
+        // 1. Verify empty journal handling
+        XCTAssertEqual(statsView.totalEntries, 0)
+        XCTAssertEqual(statsView.totalWords, 0)
+        XCTAssertEqual(statsView.totalCharacters, 0)
+        XCTAssertEqual(statsView.averageLength, 0.0)
+        XCTAssertEqual(statsView.longestEntryString, "-")
+        XCTAssertEqual(statsView.readingTimeString, "0 Min.")
+        
+        // 2. Add some entries
+        let dayData1 = DayData(text: "Hello world of SwiftUI") // 4 words, 22 chars
+        let dayData2 = DayData(text: "Learning Swift is awesome and fun.") // 6 words, 34 chars
+        
+        let month = Month(year: 2026, month: 6, days: [
+            15: dayData1,
+            16: dayData2
+        ])
+        journal.months["2026-06"] = month
+        
+        // Verify stats with 2 entries
+        XCTAssertEqual(statsView.totalEntries, 2)
+        XCTAssertEqual(statsView.totalWords, 10)
+        XCTAssertEqual(statsView.totalCharacters, 56)
+        XCTAssertEqual(statsView.averageLength, 5.0)
+        XCTAssertEqual(statsView.longestEntryString, "16.06.2026 (6 Wörter)")
+        XCTAssertEqual(statsView.readingTimeString, "Weniger als eine Minute")
+        
+        // 3. Add a longer entry to test reading time and longest entry update
+        // We will create a string with 250 words
+        let longText = Array(repeating: "word", count: 250).joined(separator: " ")
+        let dayData3 = DayData(text: longText)
+        
+        var updatedMonth = journal.months["2026-06"]!
+        updatedMonth.days[17] = dayData3
+        journal.months["2026-06"] = updatedMonth
+        
+        // Total entries: 3
+        // Total words: 10 + 250 = 260
+        // Average length: 260 / 3 = 86.666...
+        // Longest entry: 17.06.2026 (250 Wörter)
+        // Reading time: 260 / 200 = 1.3 minutes -> rounded to 1 Min.
+        XCTAssertEqual(statsView.totalEntries, 3)
+        XCTAssertEqual(statsView.totalWords, 260)
+        XCTAssertEqual(statsView.averageLength, 260.0 / 3.0, accuracy: 0.01)
+        XCTAssertEqual(statsView.longestEntryString, "17.06.2026 (250 Wörter)")
+        XCTAssertEqual(statsView.readingTimeString, "1 Min.")
+        
+        // 4. Add another long entry to test 450 words -> 460 total words -> 460 / 200 = 2.3 minutes -> rounded to 2 Min.
+        let veryLongText = Array(repeating: "word", count: 450).joined(separator: " ")
+        let dayData4 = DayData(text: veryLongText)
+        
+        updatedMonth.days[18] = dayData4
+        journal.months["2026-06"] = updatedMonth
+        
+        XCTAssertEqual(statsView.totalEntries, 4)
+        XCTAssertEqual(statsView.totalWords, 710) // 10 + 250 + 450 = 710
+        XCTAssertEqual(statsView.longestEntryString, "18.06.2026 (450 Wörter)")
+        XCTAssertEqual(statsView.readingTimeString, "4 Min.") // 710 / 200 = 3.55 -> rounded to 4 Min.
+    }
 }
+
 
 

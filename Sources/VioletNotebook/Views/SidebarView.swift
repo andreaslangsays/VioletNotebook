@@ -19,6 +19,7 @@ struct SidebarView: View {
                 Text("Tags").tag(0)
                 Text("Suche").tag(1)
                 Text("Templates").tag(2)
+                Text("Statistik").tag(3)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
@@ -75,7 +76,7 @@ struct SidebarView: View {
                         .buttonStyle(.plain)
                     }
                 }
-            } else {
+            } else if activeTab == 2 {
                 // Templates list
                 List(templatesList, id: \.name) { template in
                     Button(action: { applyTemplate(template.content) }) {
@@ -85,6 +86,9 @@ struct SidebarView: View {
                     }
                     .buttonStyle(.plain)
                 }
+            } else {
+                // Statistik
+                StatsDashboardView(journal: journal)
             }
         }
     }
