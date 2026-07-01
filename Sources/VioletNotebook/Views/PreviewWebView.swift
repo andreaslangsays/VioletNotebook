@@ -12,6 +12,8 @@ struct PreviewWebView: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: WKWebView, context: Context) {
+        context.coordinator.parent = self
+        
         let styledHtml = """
         <html>
         <head>
@@ -21,11 +23,14 @@ struct PreviewWebView: NSViewRepresentable {
             font-size: 14px;
             line-height: 1.6;
             padding: 16px;
-            background-color: transparent;
-            color: #333333;
+            background-color: #ffffff;
+            color: #1c1c1e;
         }
         @media (prefers-color-scheme: dark) {
-            body { color: #f5f5f5; }
+            body {
+                background-color: #1e1e1e;
+                color: #f5f5f5;
+            }
         }
         h1, h2, h3 { color: #5a2d82; }
         @media (prefers-color-scheme: dark) {
