@@ -6,6 +6,7 @@ struct MainView: View {
     @State private var isEditMode = true
     @State private var editorText = ""
     @State private var showFolderPicker = false
+    @State private var showExportSheet = false
     
     var body: some View {
         NavigationSplitView {
@@ -64,8 +65,13 @@ struct MainView: View {
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showFolderPicker = true }) {
-                    Label("Tagebuch öffnen", systemImage: "folder.badge.plus")
+                HStack {
+                    Button(action: { showFolderPicker = true }) {
+                        Label("Tagebuch öffnen", systemImage: "folder.badge.plus")
+                    }
+                    Button(action: { showExportSheet = true }) {
+                        Label("Exportieren", systemImage: "square.and.arrow.up")
+                    }
                 }
             }
         }
@@ -87,6 +93,9 @@ struct MainView: View {
             }
             .padding()
             .frame(width: 350, height: 200)
+        }
+        .sheet(isPresented: $showExportSheet) {
+            ExportView(journal: journal, isPresented: $showExportSheet)
         }
         .onAppear {
             NSApp.setActivationPolicy(.regular)

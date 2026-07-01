@@ -241,6 +241,54 @@ final class ViewTests: XCTestCase {
         XCTAssertEqual(statsView.longestEntryString, "18.06.2026 (450 Wörter)")
         XCTAssertEqual(statsView.readingTimeString, "4 Min.") // 710 / 200 = 3.55 -> rounded to 4 Min.
     }
+    
+    func testExportCompilerTextAndHTML() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        
+        let journal = Journal(directory: tempDir)
+        let cal = Calendar(identifier: .gregorian)
+        
+        let d14 = cal.date(from: DateComponents(year: 2026, month: 6, day: 14))!
+        let d15 = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
+        let d16 = cal.date(from: DateComponents(year: 2026, month: 6, day: 16))!
+        
+        let month = Month(year: 2026, month: 6, days: [
+            14: DayData(text: "Day 14 text"),
+            15: DayData(text: "Day 15 text"),
+            16: DayData(text: "Day 16 text")
+        ])
+        journal.months["2026-06"] = month
+        
+        let textOnly15 = ExportCompiler.compileText(from: d15, to: d15, in: journal)
+        XCTAssertTrue(textOnly15.contains("=== Montag, 15.06.2026 ==="))
+        XCTAssertTrue(textOnly15.contains("Day 15 text"))
+        XCTAssertFalse(textOnly15.contains("Day 14 text"))
+        XCTAssertFalse(textOnly15.contains("Day 16 text"))
+        
+        let textAll = ExportCompiler.compileText(from: d14, to: d16, in: journal)
+        XCTAssertTrue(textAll.contains("=== Sonntag, 14.06.2026 ==="))
+        XCTAssertTrue(textAll.contains("=== Montag, 15.06.2026 ==="))
+        XCTAssertTrue(textAll.contains("=== Dienstag, 16.06.2026 ==="))
+        
+        let htmlContent = ExportCompiler.compileHTML(from: d15, to: d15, in: journal)
+        XCTAssertTrue(htmlContent.contains("<!DOCTYPE html>"))
+        XCTAssertTrue(htmlContent.contains("Montag, 15.06.2026"))
+        XCTAssertTrue(htmlContent.contains("<p>Day 15 text</p>"))
+    }
+    
+    func testExportViewInitialization() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        
+        let journal = Journal(directory: tempDir)
+        var isPresented = true
+        let binding = Binding(get: { isPresented }, set: { isPresented = $0 })
+        let view = ExportView(journal: journal, isPresented: binding)
+        XCTAssertNotNil(view)
+    }
 }
 
 
