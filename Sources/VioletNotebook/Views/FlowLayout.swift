@@ -14,7 +14,8 @@ struct FlowLayout: Layout {
         
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            if currentLineWidth + size.width > width && currentLineWidth > 0 {
+            let neededWidth = size.width + (currentLineWidth > 0 ? spacing : 0)
+            if currentLineWidth + neededWidth > width && currentLineWidth > 0 {
                 // Wrap to next line
                 totalHeight += currentLineHeight + lineSpacing
                 maxLineWidth = max(maxLineWidth, currentLineWidth)
