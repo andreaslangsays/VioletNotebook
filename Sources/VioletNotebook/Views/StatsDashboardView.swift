@@ -3,80 +3,82 @@ import SwiftUI
 struct StatsDashboardView: View {
     @ObservedObject var journal: Journal
     
-    var entries: [(date: (day: Int, month: Int, year: Int), data: DayData)] {
-        var result: [(date: (day: Int, month: Int, year: Int), data: DayData)] = []
+    struct StatSummary {
+        let totalEntries: Int
+        let totalWords: Int
+        let totalCharacters: Int
+        let averageLength: Double
+        let longestEntryString: String
+        let readingTimeString: String
+    }
+    
+    var stats: StatSummary {
+        var entryCount = 0
+        var wordCount = 0
+        var charCount = 0
+        var maxWords = -1
+        var maxWordsDate = "-"
+        
         for month in journal.months.values {
             for (day, dayData) in month.days {
                 let textEmpty = dayData.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 let categoriesEmpty = dayData.extraCategories?.isEmpty ?? true
                 if !textEmpty || !categoriesEmpty {
-                    result.append((date: (day: day, month: month.month, year: month.year), data: dayData))
+                    entryCount += 1
+                    let words = dayData.text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+                    wordCount += words
+                    charCount += dayData.text.count
+                    
+                    if words > maxWords {
+                        maxWords = words
+                        maxWordsDate = String(format: "%02d.%02d.%04d", day, month.month, month.year)
+                    }
                 }
             }
         }
-        return result
-    }
-    
-    var totalEntries: Int {
-        return entries.count
-    }
-    
-    var totalWords: Int {
-        return entries.reduce(0) { sum, entry in
-            sum + entry.data.text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+        
+        let avg = entryCount > 0 ? Double(wordCount) / Double(entryCount) : 0.0
+        
+        let longestStr: String
+        if maxWords >= 0 {
+            let unit = maxWords == 1 ? "Wort" : "Wörter"
+            longestStr = "\(maxWordsDate) (\(maxWords) \(unit))"
+        } else {
+            longestStr = "-"
         }
-    }
-    
-    var totalCharacters: Int {
-        return entries.reduce(0) { sum, entry in
-            sum + entry.data.text.count
-        }
-    }
-    
-    var averageLength: Double {
-        let total = totalEntries
-        guard total > 0 else { return 0.0 }
-        return Double(totalWords) / Double(total)
-    }
-    
-    var longestEntry: (date: String, wordCount: Int)? {
-        var longest: (date: String, wordCount: Int)? = nil
-        for entry in entries {
-            let count = entry.data.text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
-            if let currentLongest = longest {
-                if count > currentLongest.wordCount {
-                    let dateStr = String(format: "%02d.%02d.%04d", entry.date.day, entry.date.month, entry.date.year)
-                    longest = (date: dateStr, wordCount: count)
-                }
+        
+        let readTimeStr: String
+        if wordCount > 0 {
+            let minutes = Double(wordCount) / 200.0
+            if minutes < 1.0 {
+                readTimeStr = "Weniger als eine Minute"
             } else {
-                let dateStr = String(format: "%02d.%02d.%04d", entry.date.day, entry.date.month, entry.date.year)
-                longest = (date: dateStr, wordCount: count)
+                let mins = max(1, Int(round(minutes)))
+                readTimeStr = "\(mins) Min."
             }
+        } else {
+            readTimeStr = "0 Min."
         }
-        return longest
+        
+        return StatSummary(
+            totalEntries: entryCount,
+            totalWords: wordCount,
+            totalCharacters: charCount,
+            averageLength: avg,
+            longestEntryString: longestStr,
+            readingTimeString: readTimeStr
+        )
     }
     
-    var longestEntryString: String {
-        if let longest = longestEntry {
-            let unit = longest.wordCount == 1 ? "Wort" : "Wörter"
-            return "\(longest.date) (\(longest.wordCount) \(unit))"
-        } else {
-            return "-"
-        }
-    }
-    
-    var readingTimeString: String {
-        guard totalWords > 0 else { return "0 Min." }
-        let minutes = Double(totalWords) / 200.0
-        if minutes < 1.0 {
-            return "Weniger als eine Minute"
-        } else {
-            let mins = max(1, Int(round(minutes)))
-            return "\(mins) Min."
-        }
-    }
+    var totalEntries: Int { stats.totalEntries }
+    var totalWords: Int { stats.totalWords }
+    var totalCharacters: Int { stats.totalCharacters }
+    var averageLength: Double { stats.averageLength }
+    var longestEntryString: String { stats.longestEntryString }
+    var readingTimeString: String { stats.readingTimeString }
     
     var body: some View {
+        let currentStats = stats
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Statistiken")
@@ -91,12 +93,12 @@ struct StatsDashboardView: View {
                 ]
                 
                 LazyVGrid(columns: columns, spacing: 12) {
-                    StatCard(title: "Einträge gesamt", value: "\(totalEntries)", icon: "book")
-                    StatCard(title: "Wörter gesamt", value: "\(totalWords)", icon: "text.alignleft")
-                    StatCard(title: "Zeichen gesamt", value: "\(totalCharacters)", icon: "character")
-                    StatCard(title: "Ø Länge pro Eintrag", value: totalEntries > 0 ? String(format: "%.1f", averageLength) : "0", icon: "divide")
-                    StatCard(title: "Lesezeit", value: readingTimeString, icon: "clock")
-                    StatCard(title: "Längster Eintrag", value: longestEntryString, icon: "crown")
+                    StatCard(title: "Einträge gesamt", value: "\(currentStats.totalEntries)", icon: "book")
+                    StatCard(title: "Wörter gesamt", value: "\(currentStats.totalWords)", icon: "text.alignleft")
+                    StatCard(title: "Zeichen gesamt", value: "\(currentStats.totalCharacters)", icon: "character")
+                    StatCard(title: "Ø Länge pro Eintrag", value: currentStats.totalEntries > 0 ? String(format: "%.1f", currentStats.averageLength) : "0", icon: "divide")
+                    StatCard(title: "Lesezeit", value: currentStats.readingTimeString, icon: "clock")
+                    StatCard(title: "Längster Eintrag", value: currentStats.longestEntryString, icon: "crown")
                 }
             }
             .padding()
