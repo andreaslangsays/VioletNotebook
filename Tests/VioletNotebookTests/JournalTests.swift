@@ -144,5 +144,47 @@ final class JournalTests: XCTestCase {
         XCTAssertNotNil(journal.months[journal.key(year: 2026, month: 6)])
         XCTAssertNotNil(journal.months[journal.key(year: 2026, month: 7)])
     }
+    
+    @MainActor
+    func testEntryToEntryNavigation() throws {
+        let journal = Journal(directory: tempDir)
+        
+        let date10 = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 10))!
+        let date12 = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 12))!
+        let date15 = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 15))!
+        
+        // Save entries on 2026-06-10 and 2026-06-15
+        try journal.saveEntry(text: "Entry on 10th", date: DateComponents(year: 2026, month: 6, day: 10))
+        try journal.saveEntry(text: "Entry on 15th", date: DateComponents(year: 2026, month: 6, day: 15))
+        
+        // 1. Next from 2026-06-10 should be 2026-06-15
+        let nextFrom10 = journal.findNextEntryDate(from: date10)
+        XCTAssertEqual(nextFrom10, date15)
+        
+        // 2. Previous from 2026-06-15 should be 2026-06-10
+        let prevFrom15 = journal.findPreviousEntryDate(from: date15)
+        XCTAssertEqual(prevFrom15, date10)
+        
+        // 3. From 2026-06-12, previous is 2026-06-10 and next is 2026-06-15
+        let prevFrom12 = journal.findPreviousEntryDate(from: date12)
+        let nextFrom12 = journal.findNextEntryDate(from: date12)
+        XCTAssertEqual(prevFrom12, date10)
+        XCTAssertEqual(nextFrom12, date15)
+        
+        // 4. If no entry found, returns nil
+        let prevFrom10 = journal.findPreviousEntryDate(from: date10)
+        let nextFrom15 = journal.findNextEntryDate(from: date15)
+        XCTAssertNil(prevFrom10)
+        XCTAssertNil(nextFrom15)
+        
+        // 5. Empty text but having extra categories should also be treated as a valid entry
+        let date20 = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 20))!
+        var dayData = DayData(text: "")
+        dayData.extraCategories = ["tag": .string("important")]
+        journal.months[journal.key(year: 2026, month: 6)]?.days[20] = dayData
+        
+        let nextFrom15WithCat = journal.findNextEntryDate(from: date15)
+        XCTAssertEqual(nextFrom15WithCat, date20)
+    }
 }
 

@@ -99,6 +99,18 @@ struct MainView: View {
     }
     
     private func moveDay(by offset: Int) {
+        if offset < 0 {
+            if let prevDate = journal.findPreviousEntryDate(from: selectedDate) {
+                selectedDate = prevDate
+                return
+            }
+        } else if offset > 0 {
+            if let nextDate = journal.findNextEntryDate(from: selectedDate) {
+                selectedDate = nextDate
+                return
+            }
+        }
+        
         if let newDate = Calendar.current.date(byAdding: .day, value: offset, to: selectedDate) {
             selectedDate = newDate
         }

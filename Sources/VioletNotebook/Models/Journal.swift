@@ -95,6 +95,35 @@ class Journal: ObservableObject {
         }
     }
     
+    func findPreviousEntryDate(from date: Date) -> Date? {
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let sortedDates = getSortedEntryDates()
+        return sortedDates.last(where: { $0 < normalizedDate })
+    }
+    
+    func findNextEntryDate(from date: Date) -> Date? {
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let sortedDates = getSortedEntryDates()
+        return sortedDates.first(where: { $0 > normalizedDate })
+    }
+    
+    private func getSortedEntryDates() -> [Date] {
+        var dates: [Date] = []
+        for month in months.values {
+            for (day, dayData) in month.days {
+                let textEmpty = dayData.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                let categoriesEmpty = dayData.extraCategories?.isEmpty ?? true
+                if !textEmpty || !categoriesEmpty {
+                    let comps = DateComponents(year: month.year, month: month.month, day: day)
+                    if let date = Calendar.current.date(from: comps) {
+                        dates.append(date)
+                    }
+                }
+            }
+        }
+        return dates.sorted()
+    }
+    
     public static func resolveBookmark(data: Data) throws -> URL {
         var isStale = false
         let url = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
