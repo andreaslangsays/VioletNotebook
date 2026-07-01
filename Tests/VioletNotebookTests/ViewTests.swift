@@ -112,5 +112,66 @@ final class ViewTests: XCTestCase {
         let mainView = MainView(journal: journal)
         XCTAssertNotNil(mainView)
     }
+
+    func testTagCloudFrequenciesAndFontSizes() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        
+        let journal = Journal(directory: tempDir)
+        let dayData1 = DayData(text: "Had a meeting with #team about #swift development today. #work #swift")
+        let dayData2 = DayData(text: "Working on #swift UI layouts. #ui #work")
+        
+        let month = Month(year: 2026, month: 6, days: [
+            15: dayData1,
+            16: dayData2
+        ])
+        journal.months["2026-06"] = month
+        
+        var selectedDate = Date()
+        let selectedDateBinding = Binding(get: { selectedDate }, set: { selectedDate = $0 })
+        
+        var editorText = ""
+        let editorTextBinding = Binding(get: { editorText }, set: { editorText = $0 })
+        
+        let sidebar = SidebarView(journal: journal, selectedDate: selectedDateBinding, editorText: editorTextBinding)
+        
+        let freqs = sidebar.tagFrequencies
+        XCTAssertEqual(freqs["swift"], 3)
+        XCTAssertEqual(freqs["work"], 2)
+        XCTAssertEqual(freqs["team"], 1)
+        XCTAssertEqual(freqs["ui"], 1)
+        
+        // 2. Verify font sizes linear scaling (minSize = 11, maxSize = 24)
+        XCTAssertEqual(sidebar.fontSize(for: "swift", minSize: 11, maxSize: 24), 24)
+        XCTAssertEqual(sidebar.fontSize(for: "work", minSize: 11, maxSize: 24), 17.5)
+        XCTAssertEqual(sidebar.fontSize(for: "team", minSize: 11, maxSize: 24), 11)
+        XCTAssertEqual(sidebar.fontSize(for: "ui", minSize: 11, maxSize: 24), 11)
+        
+        // 3. Verify scale calculation doesn't divide by zero if all tags have the same frequency.
+        let dayData3 = DayData(text: "#swift #work #team")
+        journal.months["2026-06"] = Month(year: 2026, month: 6, days: [15: dayData3])
+        let newFreqs = sidebar.tagFrequencies
+        XCTAssertEqual(newFreqs["swift"], 1)
+        XCTAssertEqual(newFreqs["work"], 1)
+        XCTAssertEqual(newFreqs["team"], 1)
+        XCTAssertEqual(sidebar.fontSize(for: "swift", minSize: 11, maxSize: 24), 17.5)
+        
+        // 4. Verify recalculation works cleanly when adding/removing entries.
+        let dayData4 = DayData(text: "#swift")
+        var currentMonth = journal.months["2026-06"]!
+        currentMonth.days[16] = dayData4
+        journal.months["2026-06"] = currentMonth
+        
+        let updatedFreqs = sidebar.tagFrequencies
+        XCTAssertEqual(updatedFreqs["swift"], 2)
+        XCTAssertEqual(updatedFreqs["work"], 1)
+        XCTAssertEqual(updatedFreqs["team"], 1)
+        
+        XCTAssertEqual(sidebar.fontSize(for: "swift", minSize: 11, maxSize: 24), 24)
+        XCTAssertEqual(sidebar.fontSize(for: "work", minSize: 11, maxSize: 24), 11)
+        
+        try? FileManager.default.removeItem(at: tempDir)
+    }
 }
+
 

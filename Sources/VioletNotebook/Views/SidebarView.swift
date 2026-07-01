@@ -26,11 +26,29 @@ struct SidebarView: View {
             // Tab contents
             if activeTab == 0 {
                 // Tags list
-                List(extractedTags, id: \.self) { tag in
-                    HStack {
-                        Image(systemName: "tag.fill")
-                            .foregroundColor(.purple)
-                        Text(tag)
+                let freqs = tagFrequencies
+                let sortedTags = Array(freqs.keys).sorted()
+                
+                if sortedTags.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "tag.slash")
+                            .font(.largeTitle)
+                            .foregroundColor(.secondary)
+                        Text("Keine Schlagworte gefunden")
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        FlowLayout(spacing: 8, lineSpacing: 10) {
+                            ForEach(sortedTags, id: \.self) { tag in
+                                TagCloudButton(tag: tag, size: fontSize(for: tag, frequencies: freqs)) {
+                                    searchQuery = "#\(tag)"
+                                    activeTab = 1
+                                }
+                            }
+                        }
+                        .padding()
                     }
                 }
             } else if activeTab == 1 {
@@ -83,10 +101,10 @@ struct SidebarView: View {
         try? NSRegularExpression(pattern: "(?:^|\\s)#([a-zA-Z][a-zA-Z0-9_]*)\\b", options: [])
     }()
 
-    var extractedTags: [String] {
-        var tags: Set<String> = []
+    var tagFrequencies: [String: Int] {
+        var frequencies: [String: Int] = [:]
         guard let regex = Self.tagRegex else {
-            return []
+            return [:]
         }
         for month in journal.months.values {
             for day in month.days.values {
@@ -95,13 +113,34 @@ struct SidebarView: View {
                 regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
                     if let match = match, match.numberOfRanges > 1 {
                         if let r = Range(match.range(at: 1), in: text) {
-                            tags.insert(String(text[r]))
+                            let tag = String(text[r])
+                            frequencies[tag, default: 0] += 1
                         }
                     }
                 }
             }
         }
-        return Array(tags).sorted()
+        return frequencies
+    }
+
+    var extractedTags: [String] {
+        return Array(tagFrequencies.keys).sorted()
+    }
+    
+    func fontSize(for tag: String, minSize: CGFloat = 11, maxSize: CGFloat = 24) -> CGFloat {
+        return fontSize(for: tag, frequencies: tagFrequencies, minSize: minSize, maxSize: maxSize)
+    }
+    
+    private func fontSize(for tag: String, frequencies: [String: Int], minSize: CGFloat = 11, maxSize: CGFloat = 24) -> CGFloat {
+        guard let f = frequencies[tag] else { return minSize }
+        let allFreqs = frequencies.values
+        guard let minF = allFreqs.min(), let maxF = allFreqs.max() else { return minSize }
+        if maxF == minF {
+            return (minSize + maxSize) / 2
+        } else {
+            let ratio = CGFloat(f - minF) / CGFloat(maxF - minF)
+            return minSize + ratio * (maxSize - minSize)
+        }
     }
     
     struct SearchResult {
@@ -148,5 +187,36 @@ struct SidebarView: View {
     
     func applyTemplate(_ content: String) {
         editorText += (editorText.isEmpty ? "" : "\n") + content
+    }
+}
+
+struct TagCloudButton: View {
+    let tag: String
+    let size: CGFloat
+    let action: () -> Void
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            Text("#\(tag)")
+                .font(.system(size: size, weight: .medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isHovered ? Color.purple.opacity(0.2) : Color.purple.opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isHovered ? Color.purple.opacity(0.4) : Color.purple.opacity(0.15), lineWidth: 1)
+                )
+                .foregroundColor(.purple)
+                .scaleEffect(isHovered ? 1.05 : 1.0)
+                .animation(.easeOut(duration: 0.2), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
