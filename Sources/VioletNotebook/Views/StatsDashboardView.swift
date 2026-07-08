@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StatsDashboardView: View {
     @ObservedObject var journal: Journal
+    @Environment(\.colorScheme) var colorScheme
     
     struct StatSummary {
         let totalEntries: Int
@@ -84,7 +85,7 @@ struct StatsDashboardView: View {
                 Text("Statistiken")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Theme.text(for: colorScheme))
                     .padding(.bottom, 4)
                 
                 let columns = [
@@ -103,7 +104,7 @@ struct StatsDashboardView: View {
             }
             .padding()
         }
-        .background(Theme.sidebarBackground)
+        .background(Theme.sidebarBackground(for: colorScheme))
     }
 }
 
@@ -112,6 +113,7 @@ struct StatCard: View {
     let value: String
     let icon: String
     
+    @Environment(\.colorScheme) var colorScheme
     @State private var isHovered = false
     
     var body: some View {
@@ -119,31 +121,31 @@ struct StatCard: View {
             HStack {
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundColor(Theme.accent)
+                    .foregroundColor(Theme.accent(for: colorScheme))
                 Spacer()
             }
             Spacer(minLength: 0)
             Text(value)
                 .font(.system(.title, design: .rounded))
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(Theme.text(for: colorScheme))
                 .lineLimit(2)
                 .minimumScaleFactor(0.6)
             
             Text(title)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(Theme.textMuted(for: colorScheme))
         }
         .padding()
         .frame(maxWidth: .infinity, minHeight: 90, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isHovered ? Theme.accent.opacity(0.15) : Theme.cardBackground)
+                .fill(isHovered ? Theme.accent(for: colorScheme).opacity(0.15) : Theme.cardBackground(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isHovered ? Theme.accent.opacity(0.5) : Theme.border, lineWidth: 1)
+                .stroke(isHovered ? Theme.accent(for: colorScheme).opacity(0.5) : Theme.border(for: colorScheme), lineWidth: 1)
         )
         .scaleEffect(isHovered ? 1.02 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered)

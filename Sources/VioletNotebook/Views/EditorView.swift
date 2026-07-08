@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditorView: View {
     @Binding var text: String
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -42,7 +43,7 @@ struct EditorView: View {
                 Spacer()
             }
             .padding(8)
-            .background(Theme.sidebarBackground)
+            .background(Theme.sidebarBackground(for: colorScheme))
             
             Divider()
             
@@ -51,8 +52,8 @@ struct EditorView: View {
                 .font(.system(.body, design: .monospaced))
                 .padding(4)
                 .scrollContentBackground(.hidden)
-                .background(Theme.background)
-                .foregroundColor(Theme.text)
+                .background(Theme.background(for: colorScheme))
+                .foregroundColor(Theme.text(for: colorScheme))
             
             Divider()
             
@@ -60,12 +61,12 @@ struct EditorView: View {
             HStack {
                 Text("Worte: \(wordCount) | Zeichen: \(text.count)")
                     .font(.caption)
-                    .foregroundColor(Theme.textMuted)
+                    .foregroundColor(Theme.textMuted(for: colorScheme))
                 Spacer()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
-            .background(Theme.sidebarBackground)
+            .background(Theme.sidebarBackground(for: colorScheme))
         }
     }
     

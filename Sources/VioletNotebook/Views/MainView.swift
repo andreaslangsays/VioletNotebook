@@ -8,11 +8,22 @@ struct MainView: View {
     @State private var showFolderPicker = false
     @State private var showExportSheet = false
     
+    @Environment(\.colorScheme) var colorScheme
+    @AppStorage("appearanceMode") private var appearanceMode = AppearanceMode.system
+    
+    var preferredColorScheme: ColorScheme? {
+        switch appearanceMode {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+    
     var body: some View {
         NavigationSplitView {
             SidebarView(journal: journal, selectedDate: $selectedDate, editorText: $editorText)
                 .frame(minWidth: 260, maxWidth: 320)
-                .background(Theme.sidebarBackground)
+                .background(Theme.sidebarBackground(for: colorScheme))
         } detail: {
             VStack(spacing: 0) {
                 // Detail Top Header
@@ -32,6 +43,7 @@ struct MainView: View {
                     Text(formattedDate(selectedDate))
                         .font(.title3)
                         .fontWeight(.semibold)
+                        .foregroundColor(Theme.text(for: colorScheme))
                     
                     Spacer()
                     
@@ -43,7 +55,7 @@ struct MainView: View {
                     .frame(width: 140)
                 }
                 .padding()
-                .background(Theme.sidebarBackground)
+                .background(Theme.sidebarBackground(for: colorScheme))
                 
                 Divider()
                 
@@ -62,8 +74,8 @@ struct MainView: View {
                     })
                 }
             }
-            .background(Theme.background)
-            .preferredColorScheme(.dark)
+            .background(Theme.background(for: colorScheme))
+            .preferredColorScheme(preferredColorScheme)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

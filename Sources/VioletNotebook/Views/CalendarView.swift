@@ -4,6 +4,7 @@ struct CalendarView: View {
     @Binding var selectedDate: Date
     let entryExists: (Date) -> Bool
     
+    @Environment(\.colorScheme) var colorScheme
     @State private var currentMonth: Date = Date()
     
     private let calendar = Calendar.current
@@ -22,7 +23,7 @@ struct CalendarView: View {
                 
                 Text(monthYearString(from: currentMonth))
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Theme.text(for: colorScheme))
                 
                 Spacer()
                 
@@ -40,7 +41,7 @@ struct CalendarView: View {
                         .font(.caption)
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Theme.textMuted(for: colorScheme))
                 }
             }
             
@@ -61,15 +62,15 @@ struct CalendarView: View {
                                     VStack(spacing: 2) {
                                         Text("\(calendar.component(.day, from: date))")
                                             .font(.body)
-                                            .foregroundColor(isSelected ? .white : (hasEntry ? Theme.accent : .primary))
+                                            .foregroundColor(isSelected ? .white : (hasEntry ? Theme.accent(for: colorScheme) : Theme.text(for: colorScheme)))
                                         
                                         Circle()
-                                            .fill(isSelected ? .white : Theme.accent)
+                                            .fill(isSelected ? .white : Theme.accent(for: colorScheme))
                                             .frame(width: 4, height: 4)
                                             .opacity(hasEntry ? 1.0 : 0.0)
                                     }
                                     .frame(maxWidth: .infinity, minHeight: 32)
-                                    .background(isSelected ? Theme.accent : Color.clear)
+                                    .background(isSelected ? Theme.accent(for: colorScheme) : Color.clear)
                                     .cornerRadius(6)
                                 }
                                 .buttonStyle(.plain)
@@ -83,8 +84,12 @@ struct CalendarView: View {
             }
         }
         .padding()
-        .background(Theme.cardBackground)
+        .background(Theme.cardBackground(for: colorScheme))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.border(for: colorScheme), lineWidth: 1)
+        )
         .onAppear {
             currentMonth = selectedDate
         }

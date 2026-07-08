@@ -5,6 +5,9 @@ struct SidebarView: View {
     @Binding var selectedDate: Date
     @Binding var editorText: String
     
+    @Environment(\.colorScheme) var colorScheme
+    @AppStorage("appearanceMode") private var appearanceMode = AppearanceMode.system
+    
     @State var activeTab = 0
     @State var searchQuery = ""
     
@@ -34,9 +37,9 @@ struct SidebarView: View {
                     VStack(spacing: 8) {
                         Image(systemName: "tag.slash")
                             .font(.largeTitle)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Theme.textMuted(for: colorScheme))
                         Text("Keine Schlagworte gefunden")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Theme.textMuted(for: colorScheme))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -51,7 +54,7 @@ struct SidebarView: View {
                         }
                         .padding()
                     }
-                    .background(Theme.sidebarBackground)
+                    .background(Theme.sidebarBackground(for: colorScheme))
                 }
             } else if activeTab == 1 {
                 // Search panel
@@ -65,9 +68,10 @@ struct SidebarView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(result.dateString)
                                     .font(.headline)
+                                    .foregroundColor(Theme.text(for: colorScheme))
                                 Text(result.snippet)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(Theme.textMuted(for: colorScheme))
                                     .lineLimit(1)
                             }
                             .padding(.vertical, 4)
@@ -77,26 +81,49 @@ struct SidebarView: View {
                         .buttonStyle(.plain)
                     }
                     .scrollContentBackground(.hidden)
-                    .background(Theme.sidebarBackground)
+                    .background(Theme.sidebarBackground(for: colorScheme))
                 }
             } else if activeTab == 2 {
                 // Templates list
                 List(templatesList, id: \.name) { template in
                     Button(action: { applyTemplate(template.content) }) {
                         Label(template.name, systemImage: "doc.text")
+                            .foregroundColor(Theme.text(for: colorScheme))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
                 .scrollContentBackground(.hidden)
-                .background(Theme.sidebarBackground)
+                .background(Theme.sidebarBackground(for: colorScheme))
             } else {
                 // Statistik
                 StatsDashboardView(journal: journal)
             }
+            
+            Spacer()
+            
+            Divider()
+            
+            HStack {
+                Text("Design:")
+                    .font(.caption)
+                    .foregroundColor(Theme.textMuted(for: colorScheme))
+                
+                Spacer()
+                
+                Picker("", selection: $appearanceMode) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 160)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
-        .background(Theme.sidebarBackground)
+        .background(Theme.sidebarBackground(for: colorScheme))
     }
     
     private static let searchDateFormatter: DateFormatter = {
@@ -204,6 +231,8 @@ struct TagCloudButton: View {
     let tag: String
     let size: CGFloat
     let action: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
     @State private var isHovered = false
     
     var body: some View {
@@ -214,13 +243,13 @@ struct TagCloudButton: View {
                 .padding(.vertical, 5)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isHovered ? Theme.accent.opacity(0.25) : Theme.cardBackground)
+                        .fill(isHovered ? Theme.accent(for: colorScheme).opacity(0.25) : Theme.cardBackground(for: colorScheme))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isHovered ? Theme.accent : Theme.border, lineWidth: 1)
+                        .stroke(isHovered ? Theme.accent(for: colorScheme) : Theme.border(for: colorScheme), lineWidth: 1)
                 )
-                .foregroundColor(isHovered ? .white : Theme.text)
+                .foregroundColor(isHovered ? .white : Theme.text(for: colorScheme))
                 .scaleEffect(isHovered ? 1.05 : 1.0)
                 .animation(.easeOut(duration: 0.2), value: isHovered)
         }
