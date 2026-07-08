@@ -42,7 +42,7 @@ struct EditorView: View {
                 Spacer()
             }
             .padding(8)
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(Theme.sidebarBackground)
             
             Divider()
             
@@ -50,6 +50,9 @@ struct EditorView: View {
             TextEditor(text: $text)
                 .font(.system(.body, design: .monospaced))
                 .padding(4)
+                .scrollContentBackground(.hidden)
+                .background(Theme.background)
+                .foregroundColor(Theme.text)
             
             Divider()
             
@@ -57,12 +60,12 @@ struct EditorView: View {
             HStack {
                 Text("Worte: \(wordCount) | Zeichen: \(text.count)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.textMuted)
                 Spacer()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(Theme.sidebarBackground)
         }
     }
     

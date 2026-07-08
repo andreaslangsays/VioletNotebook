@@ -103,7 +103,7 @@ struct StatsDashboardView: View {
             }
             .padding()
         }
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Theme.sidebarBackground)
     }
 }
 
@@ -119,7 +119,7 @@ struct StatCard: View {
             HStack {
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundColor(Color.purple)
+                    .foregroundColor(Theme.accent)
                 Spacer()
             }
             Spacer(minLength: 0)
@@ -139,11 +139,11 @@ struct StatCard: View {
         .frame(maxWidth: .infinity, minHeight: 90, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isHovered ? Color.purple.opacity(0.1) : Color.purple.opacity(0.04))
+                .fill(isHovered ? Theme.accent.opacity(0.15) : Theme.cardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isHovered ? Color.purple.opacity(0.3) : Color.purple.opacity(0.12), lineWidth: 1)
+                .stroke(isHovered ? Theme.accent.opacity(0.5) : Theme.border, lineWidth: 1)
         )
         .scaleEffect(isHovered ? 1.02 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered)

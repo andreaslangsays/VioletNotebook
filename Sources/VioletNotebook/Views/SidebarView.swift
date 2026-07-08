@@ -51,6 +51,7 @@ struct SidebarView: View {
                         }
                         .padding()
                     }
+                    .background(Theme.sidebarBackground)
                 }
             } else if activeTab == 1 {
                 // Search panel
@@ -75,6 +76,8 @@ struct SidebarView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .scrollContentBackground(.hidden)
+                    .background(Theme.sidebarBackground)
                 }
             } else if activeTab == 2 {
                 // Templates list
@@ -86,11 +89,14 @@ struct SidebarView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                .scrollContentBackground(.hidden)
+                .background(Theme.sidebarBackground)
             } else {
                 // Statistik
                 StatsDashboardView(journal: journal)
             }
         }
+        .background(Theme.sidebarBackground)
     }
     
     private static let searchDateFormatter: DateFormatter = {
@@ -208,13 +214,13 @@ struct TagCloudButton: View {
                 .padding(.vertical, 5)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isHovered ? Color.purple.opacity(0.2) : Color.purple.opacity(0.08))
+                        .fill(isHovered ? Theme.accent.opacity(0.25) : Theme.cardBackground)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isHovered ? Color.purple.opacity(0.4) : Color.purple.opacity(0.15), lineWidth: 1)
+                        .stroke(isHovered ? Theme.accent : Theme.border, lineWidth: 1)
                 )
-                .foregroundColor(.purple)
+                .foregroundColor(isHovered ? .white : Theme.text)
                 .scaleEffect(isHovered ? 1.05 : 1.0)
                 .animation(.easeOut(duration: 0.2), value: isHovered)
         }

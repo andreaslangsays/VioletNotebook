@@ -28,23 +28,28 @@ struct PreviewWebView: NSViewRepresentable {
         }
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: #1e1e1e;
-                color: #f5f5f5;
+                background-color: #120d21;
+                color: #f5f3f7;
             }
         }
         h1, h2, h3 { color: #5a2d82; }
         @media (prefers-color-scheme: dark) {
-            h1, h2, h3 { color: #b18ce4; }
+            h1, h2, h3 { color: #a855f7; }
         }
         a { color: #7f34c2; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        @media (prefers-color-scheme: dark) {
+            a { color: #c77dff; }
+        }
         .hashtag {
             color: #a855f7;
             font-weight: 500;
         }
+        @media (prefers-color-scheme: dark) {
+            .hashtag { color: #e0aaff; }
+        }
         hr { border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0; }
         @media (prefers-color-scheme: dark) {
-            hr { border-top: 1px solid #475569; }
+            hr { border-top: 1px solid #382e59; }
         }
         </style>
         </head>

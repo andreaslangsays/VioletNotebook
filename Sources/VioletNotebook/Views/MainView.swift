@@ -12,6 +12,7 @@ struct MainView: View {
         NavigationSplitView {
             SidebarView(journal: journal, selectedDate: $selectedDate, editorText: $editorText)
                 .frame(minWidth: 260, maxWidth: 320)
+                .background(Theme.sidebarBackground)
         } detail: {
             VStack(spacing: 0) {
                 // Detail Top Header
@@ -42,7 +43,7 @@ struct MainView: View {
                     .frame(width: 140)
                 }
                 .padding()
-                .background(Color(NSColor.windowBackgroundColor))
+                .background(Theme.sidebarBackground)
                 
                 Divider()
                 
@@ -61,7 +62,8 @@ struct MainView: View {
                     })
                 }
             }
-            .background(Color(NSColor.controlBackgroundColor))
+            .background(Theme.background)
+            .preferredColorScheme(.dark)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

@@ -61,15 +61,15 @@ struct CalendarView: View {
                                     VStack(spacing: 2) {
                                         Text("\(calendar.component(.day, from: date))")
                                             .font(.body)
-                                            .foregroundColor(isSelected ? .white : .primary)
+                                            .foregroundColor(isSelected ? .white : (hasEntry ? Theme.accent : .primary))
                                         
                                         Circle()
-                                            .fill(isSelected ? .white : Color.purple)
+                                            .fill(isSelected ? .white : Theme.accent)
                                             .frame(width: 4, height: 4)
                                             .opacity(hasEntry ? 1.0 : 0.0)
                                     }
                                     .frame(maxWidth: .infinity, minHeight: 32)
-                                    .background(isSelected ? Color.purple : Color.clear)
+                                    .background(isSelected ? Theme.accent : Color.clear)
                                     .cornerRadius(6)
                                 }
                                 .buttonStyle(.plain)
@@ -83,7 +83,7 @@ struct CalendarView: View {
             }
         }
         .padding()
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Theme.cardBackground)
         .cornerRadius(12)
         .onAppear {
             currentMonth = selectedDate
